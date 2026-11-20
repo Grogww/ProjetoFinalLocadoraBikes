@@ -2,6 +2,7 @@ package br.edu.ifc.bikes;
 
 import br.edu.ifc.bikes.dto.UsuarioRequestDTO;
 import br.edu.ifc.bikes.dto.UsuarioResponseDTO;
+import br.edu.ifc.bikes.jwt.JwtUtils;
 import br.edu.ifc.bikes.web.exception.ErrorMessage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -42,7 +43,7 @@ public class UsuarioIT extends RuntimeException {
         org.assertj.core.api.Assertions.assertThat(responseBody).isNotNull();
         org.assertj.core.api.Assertions.assertThat(responseBody.id()).isNotNull();
         org.assertj.core.api.Assertions.assertThat(responseBody.username()).isEqualTo("fabio@gmail.com");
-        org.assertj.core.api.Assertions.assertThat(responseBody.role()).isEqualTo("CLIENTE");
+        org.assertj.core.api.Assertions.assertThat(responseBody.role()).isEqualTo("ROLE_CLIENTE");
     }
 
     @Test
@@ -111,6 +112,7 @@ public class UsuarioIT extends RuntimeException {
         UsuarioResponseDTO responseBody = testClient
                 .get()
                 .uri("/api/v1/usuarios/100")
+                .header(JwtUtils.JWT_AUTHORIZATION, JwtAuthentication.getHeaderAuthorization(testClient, "jose@gmail.com", "123456"))
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody(UsuarioResponseDTO.class)
@@ -120,7 +122,7 @@ public class UsuarioIT extends RuntimeException {
         org.assertj.core.api.Assertions.assertThat(responseBody).isNotNull();
         org.assertj.core.api.Assertions.assertThat(responseBody.id()).isEqualTo(100);
         org.assertj.core.api.Assertions.assertThat(responseBody.username()).isEqualTo("jose@gmail.com");
-        org.assertj.core.api.Assertions.assertThat(responseBody.role()).isEqualTo("ADMIN");
+        org.assertj.core.api.Assertions.assertThat(responseBody.role()).isEqualTo("ROLE_ADMIN");
     }
 
     @Test //TESTA PARA O CASO DE ERRO - USUÁRIO INEXISTENTE (ID 110)
@@ -128,6 +130,7 @@ public class UsuarioIT extends RuntimeException {
         ErrorMessage responseBody = testClient
                 .get()
                 .uri("/api/v1/usuarios/110")
+                .header(JwtUtils.JWT_AUTHORIZATION, JwtAuthentication.getHeaderAuthorization(testClient, "jose@gmail.com", "123456"))
                 .exchange()
                 .expectStatus().isNotFound()
                 .expectBody(ErrorMessage.class)
