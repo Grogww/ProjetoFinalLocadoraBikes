@@ -1,6 +1,7 @@
 package br.edu.ifc.bikes;
 
 import br.edu.ifc.bikes.dto.BicicletaResponseDTO;
+import br.edu.ifc.bikes.dto.DevolucaoRequestDTO;
 import br.edu.ifc.bikes.dto.LocacaoRequestDTO;
 import br.edu.ifc.bikes.dto.LocacaoResponseDTO;
 import br.edu.ifc.bikes.jwt.JwtUtils;
@@ -190,6 +191,159 @@ public class LocacaoIT {
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(JwtUtils.JWT_AUTHORIZATION, JwtAuthentication.getHeaderAuthorization(testClient, "jose@gmail.com", "123456"))
                 .bodyValue(new LocacaoRequestDTO("4111111111111111", "12/99", "123", 1))
+                .exchange()
+                .expectStatus().isForbidden()
+                .expectBody(ErrorMessage.class)
+                .returnResult().getResponseBody();
+
+        org.assertj.core.api.Assertions.assertThat(responseBody).isNotNull();
+        org.assertj.core.api.Assertions.assertThat(responseBody.getStatus()).isEqualTo(403);
+    }
+
+    @Test //TESTA PARA O CASO DE SUCESSO - DEVOLUÇÃO APÓS 90 MINUTOS COBRA 2 HORAS E LIBERA A BICICLETA
+    public void devolverBicicleta_DadosValidos_RetornaLocacaoFinalizadaStatus200(){
+        LocacaoResponseDTO responseBody = testClient
+                .patch()
+                .uri("/api/v1/locacoes/20/devolucao")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(JwtUtils.JWT_AUTHORIZATION, JwtAuthentication.getHeaderAuthorization(testClient, "maria@gmail.com", "123456"))
+                .bodyValue(new DevolucaoRequestDTO(false))
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(LocacaoResponseDTO.class)
+                .returnResult().getResponseBody();
+
+        org.assertj.core.api.Assertions.assertThat(responseBody).isNotNull();
+        org.assertj.core.api.Assertions.assertThat(responseBody.id()).isEqualTo(20);
+        org.assertj.core.api.Assertions.assertThat(responseBody.status()).isEqualTo("FINALIZADA");
+        org.assertj.core.api.Assertions.assertThat(responseBody.dataDevolucao()).isNotNull();
+        org.assertj.core.api.Assertions.assertThat(responseBody.valor()).isEqualByComparingTo("20.00");
+        org.assertj.core.api.Assertions.assertThat(responseBody.bicicleta().status()).isEqualTo("DISPONIVEL");
+
+        BicicletaResponseDTO bicicleta = testClient
+                .get()
+                .uri("/api/v1/bicicletas/10")
+                .header(JwtUtils.JWT_AUTHORIZATION, JwtAuthentication.getHeaderAuthorization(testClient, "jose@gmail.com", "123456"))
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(BicicletaResponseDTO.class)
+                .returnResult().getResponseBody();
+
+        org.assertj.core.api.Assertions.assertThat(bicicleta).isNotNull();
+        org.assertj.core.api.Assertions.assertThat(bicicleta.status()).isEqualTo("DISPONIVEL");
+    }
+
+    @Test //TESTA PARA O CASO DE SUCESSO - DEVOLUÇÃO ANTES DE 1 HORA COBRA O VALOR MÍNIMO
+    public void devolverBicicleta_MenosDeUmaHora_RetornaValorMinimoStatus200(){
+        LocacaoResponseDTO responseBody = testClient
+                .patch()
+                .uri("/api/v1/locacoes/21/devolucao")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(JwtUtils.JWT_AUTHORIZATION, JwtAuthentication.getHeaderAuthorization(testClient, "ana@gmail.com", "123456"))
+                .bodyValue(new DevolucaoRequestDTO(false))
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(LocacaoResponseDTO.class)
+                .returnResult().getResponseBody();
+
+        org.assertj.core.api.Assertions.assertThat(responseBody).isNotNull();
+        org.assertj.core.api.Assertions.assertThat(responseBody.valor()).isEqualByComparingTo("10.00");
+        org.assertj.core.api.Assertions.assertThat(responseBody.status()).isEqualTo("FINALIZADA");
+    }
+
+    @Test //TESTA PARA O CASO DE SUCESSO - CLIENTE RELATA PROBLEMA E A BICICLETA VAI PARA MANUTENÇÃO
+    public void devolverBicicleta_ComProblema_RetornaBicicletaManutencaoStatus200(){
+        LocacaoResponseDTO responseBody = testClient
+                .patch()
+                .uri("/api/v1/locacoes/20/devolucao")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(JwtUtils.JWT_AUTHORIZATION, JwtAuthentication.getHeaderAuthorization(testClient, "maria@gmail.com", "123456"))
+                .bodyValue(new DevolucaoRequestDTO(true))
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(LocacaoResponseDTO.class)
+                .returnResult().getResponseBody();
+
+        org.assertj.core.api.Assertions.assertThat(responseBody).isNotNull();
+        org.assertj.core.api.Assertions.assertThat(responseBody.status()).isEqualTo("FINALIZADA");
+        org.assertj.core.api.Assertions.assertThat(responseBody.bicicleta().status()).isEqualTo("MANUTENCAO");
+    }
+
+    @Test //TESTA PARA O CASO DE ERRO - LOCAÇÃO JÁ FINALIZADA
+    public void devolverBicicleta_LocacaoFinalizada_RetornaErrorMessageStatus409(){
+        ErrorMessage responseBody = testClient
+                .patch()
+                .uri("/api/v1/locacoes/22/devolucao")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(JwtUtils.JWT_AUTHORIZATION, JwtAuthentication.getHeaderAuthorization(testClient, "maria@gmail.com", "123456"))
+                .bodyValue(new DevolucaoRequestDTO(false))
+                .exchange()
+                .expectStatus().isEqualTo(409)
+                .expectBody(ErrorMessage.class)
+                .returnResult().getResponseBody();
+
+        org.assertj.core.api.Assertions.assertThat(responseBody).isNotNull();
+        org.assertj.core.api.Assertions.assertThat(responseBody.getStatus()).isEqualTo(409);
+    }
+
+    @Test //TESTA PARA O CASO DE ERRO - LOCAÇÃO NÃO ENCONTRADA PARA O CLIENTE
+    //FORAM REALIZADOS 02 TESTES - LOCAÇÃO DE OUTRO CLIENTE E LOCAÇÃO INEXISTENTE
+    public void devolverBicicleta_LocacaoDeOutroCliente_RetornaErrorMessageStatus404(){
+        ErrorMessage responseBody = testClient
+                .patch()
+                .uri("/api/v1/locacoes/20/devolucao")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(JwtUtils.JWT_AUTHORIZATION, JwtAuthentication.getHeaderAuthorization(testClient, "ana@gmail.com", "123456"))
+                .bodyValue(new DevolucaoRequestDTO(false))
+                .exchange()
+                .expectStatus().isNotFound()
+                .expectBody(ErrorMessage.class)
+                .returnResult().getResponseBody();
+
+        org.assertj.core.api.Assertions.assertThat(responseBody).isNotNull();
+        org.assertj.core.api.Assertions.assertThat(responseBody.getStatus()).isEqualTo(404);
+
+        responseBody = testClient
+                .patch()
+                .uri("/api/v1/locacoes/99/devolucao")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(JwtUtils.JWT_AUTHORIZATION, JwtAuthentication.getHeaderAuthorization(testClient, "ana@gmail.com", "123456"))
+                .bodyValue(new DevolucaoRequestDTO(false))
+                .exchange()
+                .expectStatus().isNotFound()
+                .expectBody(ErrorMessage.class)
+                .returnResult().getResponseBody();
+
+        org.assertj.core.api.Assertions.assertThat(responseBody).isNotNull();
+        org.assertj.core.api.Assertions.assertThat(responseBody.getStatus()).isEqualTo(404);
+    }
+
+    @Test //TESTA PARA O CASO DE DADOS INVÁLIDOS - CAMPO POSSUIPROBLEMA NÃO INFORMADO
+    public void devolverBicicleta_DadosInvalidos_RetornaErrorMessageStatus422(){
+        ErrorMessage responseBody = testClient
+                .patch()
+                .uri("/api/v1/locacoes/20/devolucao")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(JwtUtils.JWT_AUTHORIZATION, JwtAuthentication.getHeaderAuthorization(testClient, "maria@gmail.com", "123456"))
+                .bodyValue(new DevolucaoRequestDTO(null))
+                .exchange()
+                .expectStatus().isEqualTo(422)
+                .expectBody(ErrorMessage.class)
+                .returnResult().getResponseBody();
+
+        org.assertj.core.api.Assertions.assertThat(responseBody).isNotNull();
+        org.assertj.core.api.Assertions.assertThat(responseBody.getStatus()).isEqualTo(422);
+        org.assertj.core.api.Assertions.assertThat(responseBody.getErrors()).containsKey("possuiProblema");
+    }
+
+    @Test //TESTA PARA O CASO DE ACESSO NEGADO - ADMIN NÃO DEVOLVE BICICLETA
+    public void devolverBicicleta_UsuarioAdmin_RetornaErrorMessageStatus403(){
+        ErrorMessage responseBody = testClient
+                .patch()
+                .uri("/api/v1/locacoes/20/devolucao")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(JwtUtils.JWT_AUTHORIZATION, JwtAuthentication.getHeaderAuthorization(testClient, "jose@gmail.com", "123456"))
+                .bodyValue(new DevolucaoRequestDTO(false))
                 .exchange()
                 .expectStatus().isForbidden()
                 .expectBody(ErrorMessage.class)

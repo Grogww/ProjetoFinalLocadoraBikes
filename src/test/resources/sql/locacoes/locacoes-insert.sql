@@ -18,3 +18,11 @@ insert into BICICLETAS (id, modelo, codigo, status)
     values (12, 'Oggi Big Wheel', 'BK-003', 'DISPONIVEL');
 insert into BICICLETAS (id, modelo, codigo, status)
     values (13, 'Sense Impact', 'BK-004', 'DISPONIVEL');
+insert into BICICLETAS (id, modelo, codigo, status)
+    values (14, 'Caloi Explorer', 'BK-005', 'ALUGADA');
+insert into LOCACOES (id, cliente_id, bicicleta_id, data_retirada, data_prevista_devolucao, final_cartao, status)
+    values (20, 10, 10, DATEADD('MINUTE', -90, LOCALTIMESTAMP), DATEADD('MINUTE', 30, LOCALTIMESTAMP), '1111', 'ATIVA');
+insert into LOCACOES (id, cliente_id, bicicleta_id, data_retirada, data_prevista_devolucao, final_cartao, status)
+    values (21, 11, 14, DATEADD('MINUTE', -10, LOCALTIMESTAMP), DATEADD('MINUTE', 50, LOCALTIMESTAMP), '1111', 'ATIVA');
+insert into LOCACOES (id, cliente_id, bicicleta_id, data_retirada, data_prevista_devolucao, data_devolucao, valor, final_cartao, status)
+    values (22, 10, 11, '2026-11-01 08:00:00', '2026-11-01 09:00:00', '2026-11-01 09:00:00', 10.00, '1111', 'FINALIZADA');

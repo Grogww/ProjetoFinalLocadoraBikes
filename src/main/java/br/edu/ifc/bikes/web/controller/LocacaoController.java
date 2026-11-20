@@ -1,5 +1,6 @@
 package br.edu.ifc.bikes.web.controller;
 
+import br.edu.ifc.bikes.dto.DevolucaoRequestDTO;
 import br.edu.ifc.bikes.dto.LocacaoRequestDTO;
 import br.edu.ifc.bikes.dto.LocacaoResponseDTO;
 import br.edu.ifc.bikes.jwt.JwtUserDetails;
@@ -46,5 +47,28 @@ public class LocacaoController {
                                                      @AuthenticationPrincipal JwtUserDetails userDetails) {
         LocacaoResponseDTO locacaoCriada = locacaoService.alugar(locacao, userDetails.getId());
         return ResponseEntity.status(HttpStatus.CREATED).body(locacaoCriada);
+    }
+
+    @Operation(summary = "Devolver uma bicicleta", description = "Recurso exclusivo do perfil CLIENTE. Finaliza a locação e calcula o valor a debitar no cartão",
+        responses = {
+                @ApiResponse(responseCode = "200", description = "Devolução registrada com sucesso",
+                        content = @Content(mediaType = "application/json", schema = @Schema(implementation = LocacaoResponseDTO.class))),
+                @ApiResponse(responseCode = "403", description = "Recurso não permitido ao perfil ADMIN",
+                        content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorMessage.class))),
+                @ApiResponse(responseCode = "404", description = "Locação não encontrada para o cliente autenticado",
+                        content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorMessage.class))),
+                @ApiResponse(responseCode = "409", description = "Locação já finalizada",
+                        content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorMessage.class))),
+                @ApiResponse(responseCode = "422", description = "Recurso não processado por dados de entrada inválidos",
+                        content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorMessage.class)))
+        })
+    //o cliente só devolve as próprias locações, identificadas pelo usuário do token
+    @PatchMapping("/{id}/devolucao")
+    @PreAuthorize("hasRole('CLIENTE')")
+    public ResponseEntity<LocacaoResponseDTO> devolver(@PathVariable Long id,
+                                                       @Valid @RequestBody DevolucaoRequestDTO devolucao,
+                                                       @AuthenticationPrincipal JwtUserDetails userDetails) {
+        LocacaoResponseDTO locacaoFinalizada = locacaoService.devolver(id, devolucao, userDetails.getId());
+        return ResponseEntity.ok(locacaoFinalizada);
     }
 }

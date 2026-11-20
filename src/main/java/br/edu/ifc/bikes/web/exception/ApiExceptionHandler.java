@@ -6,6 +6,7 @@ import br.edu.ifc.bikes.exception.ClienteUniqueViolationException;
 import br.edu.ifc.bikes.exception.CodigoUniqueViolationException;
 import br.edu.ifc.bikes.exception.CpfUniqueViolationException;
 import br.edu.ifc.bikes.exception.EntityNotFoundException;
+import br.edu.ifc.bikes.exception.LocacaoFinalizadaException;
 import br.edu.ifc.bikes.exception.UsernameUniqueViolationException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
@@ -78,6 +79,17 @@ public class ApiExceptionHandler {
 
     @ExceptionHandler(BicicletaIndisponivelException.class)
     public ResponseEntity<ErrorMessage> bicicletaIndisponivelException(
+            RuntimeException ex,
+            HttpServletRequest request){
+
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new ErrorMessage(request, HttpStatus.CONFLICT, ex.getMessage()));
+    }
+
+    @ExceptionHandler(LocacaoFinalizadaException.class)
+    public ResponseEntity<ErrorMessage> locacaoFinalizadaException(
             RuntimeException ex,
             HttpServletRequest request){
 
