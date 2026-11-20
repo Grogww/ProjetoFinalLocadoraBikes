@@ -1,5 +1,7 @@
 package br.edu.ifc.bikes.web.exception;
 
+import br.edu.ifc.bikes.exception.BicicletaIndisponivelException;
+import br.edu.ifc.bikes.exception.CartaoVencidoException;
 import br.edu.ifc.bikes.exception.ClienteUniqueViolationException;
 import br.edu.ifc.bikes.exception.CodigoUniqueViolationException;
 import br.edu.ifc.bikes.exception.CpfUniqueViolationException;
@@ -72,6 +74,28 @@ public class ApiExceptionHandler {
                 .status(HttpStatus.CONFLICT)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(new ErrorMessage(request, HttpStatus.CONFLICT, ex.getMessage()));
+    }
+
+    @ExceptionHandler(BicicletaIndisponivelException.class)
+    public ResponseEntity<ErrorMessage> bicicletaIndisponivelException(
+            RuntimeException ex,
+            HttpServletRequest request){
+
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new ErrorMessage(request, HttpStatus.CONFLICT, ex.getMessage()));
+    }
+
+    @ExceptionHandler(CartaoVencidoException.class)
+    public ResponseEntity<ErrorMessage> cartaoVencidoException(
+            RuntimeException ex,
+            HttpServletRequest request){
+
+        return ResponseEntity
+                .status(HttpStatus.UNPROCESSABLE_CONTENT)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new ErrorMessage(request, HttpStatus.UNPROCESSABLE_CONTENT, ex.getMessage()));
     }
 
     //o @PreAuthorize lança AccessDeniedException quando o perfil não tem permissão
