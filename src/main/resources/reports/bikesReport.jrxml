@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport name="bikesReport" language="java" pageWidth="595" pageHeight="842" whenNoDataType="AllSectionsNoDetail" columnWidth="535" leftMargin="30" rightMargin="30" topMargin="30" bottomMargin="30" uuid="6f1d2c3a-8b4e-4a51-9c7e-2d5b0a9e1f01">
+	<style name="Base" default="true" forecolor="#261A30" fontSize="9.0"/>
+	<style name="Cabecalho" forecolor="#68217A" fontSize="8.0" bold="true" pdfFontName="Helvetica-Bold"/>
+	<parameter name="APENAS_ATIVAS" class="java.lang.Boolean">
+		<defaultValueExpression><![CDATA[Boolean.FALSE]]></defaultValueExpression>
+	</parameter>
+	<query language="sql"><![CDATA[select c.nome as cliente, b.codigo as bicicleta, l.data_retirada, l.data_devolucao, l.status
+from locacoes l
+join clientes c on c.id = l.cliente_id
+join bicicletas b on b.id = l.bicicleta_id
+where ($P{APENAS_ATIVAS} = false or l.status = 'ATIVA')
+order by l.data_retirada desc]]></query>
+	<field name="cliente" class="java.lang.String"/>
+	<field name="bicicleta" class="java.lang.String"/>
+	<field name="data_retirada" class="java.sql.Timestamp"/>
+	<field name="data_devolucao" class="java.sql.Timestamp"/>
+	<field name="status" class="java.lang.String"/>
+	<variable name="MINUTOS" class="java.lang.Long">
+		<expression><![CDATA[$F{data_devolucao} == null ? null : ($F{data_devolucao}.getTime() - $F{data_retirada}.getTime()) / 60000L]]></expression>
+	</variable>
+	<title height="86">
+		<element kind="rectangle" uuid="a1c0e7d2-1f3b-4c6a-8e2d-000000000001" x="0" y="0" width="535" height="64" forecolor="#3B1460" backcolor="#3B1460">
+			<pen lineWidth="0.0"/>
+		</element>
+		<element kind="staticText" uuid="a1c0e7d2-1f3b-4c6a-8e2d-000000000002" x="16" y="12" width="330" height="24" forecolor="#FFFFFF" fontSize="17.0" bold="true" pdfFontName="Helvetica-Bold" vTextAlign="Middle">
+			<text><![CDATA[Relatório de Locações e Devoluções]]></text>
+		</element>
+		<element kind="staticText" uuid="a1c0e7d2-1f3b-4c6a-8e2d-000000000003" x="16" y="36" width="330" height="16" forecolor="#D9C8EA" fontSize="9.0" vTextAlign="Middle">
+			<text><![CDATA[Bikes · Locadora de Bicicletas]]></text>
+		</element>
+		<element kind="textField" uuid="a1c0e7d2-1f3b-4c6a-8e2d-000000000004" x="350" y="12" width="169" height="24" forecolor="#FFFFFF" fontSize="9.0" bold="true" pdfFontName="Helvetica-Bold" hTextAlign="Right" vTextAlign="Middle">
+			<expression><![CDATA[$P{APENAS_ATIVAS} ? "Locações em andamento" : "Todas as locações"]]></expression>
+		</element>
+		<element kind="textField" uuid="a1c0e7d2-1f3b-4c6a-8e2d-000000000005" x="350" y="36" width="169" height="16" forecolor="#D9C8EA" fontSize="8.0" pattern="dd/MM/yyyy HH:mm" hTextAlign="Right" vTextAlign="Middle">
+			<expression><![CDATA["Emitido em " + new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm").format(new java.util.Date())]]></expression>
+		</element>
+	</title>
+	<columnHeader height="24">
+		<element kind="staticText" uuid="b2d1f8e3-2a4c-4d7b-9f3e-000000000001" x="0" y="0" width="150" height="24" style="Cabecalho" vTextAlign="Middle">
+			<text><![CDATA[CLIENTE]]></text>
+			<box leftPadding="6"/>
+		</element>
+		<element kind="staticText" uuid="b2d1f8e3-2a4c-4d7b-9f3e-000000000002" x="150" y="0" width="70" height="24" style="Cabecalho" vTextAlign="Middle">
+			<text><![CDATA[BICICLETA]]></text>
+			<box leftPadding="6"/>
+		</element>
+		<element kind="staticText" uuid="b2d1f8e3-2a4c-4d7b-9f3e-000000000003" x="220" y="0" width="85" height="24" style="Cabecalho" vTextAlign="Middle">
+			<text><![CDATA[RETIRADA]]></text>
+			<box leftPadding="6"/>
+		</element>
+		<element kind="staticText" uuid="b2d1f8e3-2a4c-4d7b-9f3e-000000000004" x="305" y="0" width="85" height="24" style="Cabecalho" vTextAlign="Middle">
+			<text><![CDATA[DEVOLUÇÃO]]></text>
+			<box leftPadding="6"/>
+		</element>
+		<element kind="staticText" uuid="b2d1f8e3-2a4c-4d7b-9f3e-000000000005" x="390" y="0" width="60" height="24" style="Cabecalho" hTextAlign="Right" vTextAlign="Middle">
+			<text><![CDATA[DURAÇÃO]]></text>
+			<box rightPadding="10"/>
+		</element>
+		<element kind="staticText" uuid="b2d1f8e3-2a4c-4d7b-9f3e-000000000006" x="450" y="0" width="85" height="24" style="Cabecalho" vTextAlign="Middle">
+			<text><![CDATA[STATUS]]></text>
+			<box leftPadding="6"/>
+		</element>
+		<element kind="line" uuid="b2d1f8e3-2a4c-4d7b-9f3e-000000000007" x="0" y="23" width="535" height="1">
+			<pen lineWidth="1.5" lineColor="#68217A"/>
+		</element>
+	</columnHeader>
+	<detail>
+		<band height="20">
+			<element kind="rectangle" uuid="c3e2a9f4-3b5d-4e8c-8a4f-000000000001" mode="Opaque" x="0" y="0" width="535" height="20" forecolor="#F4EFF8" backcolor="#F4EFF8">
+				<printWhenExpression><![CDATA[$V{REPORT_COUNT} % 2 == 0]]></printWhenExpression>
+				<pen lineWidth="0.0"/>
+			</element>
+			<element kind="textField" uuid="c3e2a9f4-3b5d-4e8c-8a4f-000000000002" x="0" y="0" width="150" height="20" textAdjust="ScaleFont" vTextAlign="Middle">
+				<expression><![CDATA[$F{cliente}]]></expression>
+				<box leftPadding="6"/>
+			</element>
+			<element kind="textField" uuid="c3e2a9f4-3b5d-4e8c-8a4f-000000000003" x="150" y="0" width="70" height="20" vTextAlign="Middle">
+				<expression><![CDATA[$F{bicicleta}]]></expression>
+				<box leftPadding="6"/>
+			</element>
+			<element kind="textField" uuid="c3e2a9f4-3b5d-4e8c-8a4f-000000000004" x="220" y="0" width="85" height="20" pattern="dd/MM/yyyy HH:mm" vTextAlign="Middle">
+				<expression><![CDATA[$F{data_retirada}]]></expression>
+				<box leftPadding="6"/>
+			</element>
+			<element kind="textField" uuid="c3e2a9f4-3b5d-4e8c-8a4f-000000000005" x="305" y="0" width="85" height="20" vTextAlign="Middle">
+				<expression><![CDATA[$F{data_devolucao} == null ? "EM ANDAMENTO" : new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm").format($F{data_devolucao})]]></expression>
+				<box leftPadding="6"/>
+			</element>
+			<element kind="textField" uuid="c3e2a9f4-3b5d-4e8c-8a4f-000000000006" x="390" y="0" width="60" height="20" hTextAlign="Right" vTextAlign="Middle">
+				<expression><![CDATA[$V{MINUTOS} == null ? "-" : ($V{MINUTOS} / 60) + "h" + ($V{MINUTOS} % 60 == 0 ? "" : String.format("%02d", $V{MINUTOS} % 60))]]></expression>
+				<box rightPadding="10"/>
+			</element>
+			<element kind="textField" uuid="c3e2a9f4-3b5d-4e8c-8a4f-000000000007" x="450" y="0" width="85" height="20" forecolor="#68217A" bold="true" pdfFontName="Helvetica-Bold" vTextAlign="Middle">
+				<printWhenExpression><![CDATA["ATIVA".equals($F{status})]]></printWhenExpression>
+				<expression><![CDATA[$F{status}]]></expression>
+				<box leftPadding="6"/>
+			</element>
+			<element kind="textField" uuid="c3e2a9f4-3b5d-4e8c-8a4f-000000000008" x="450" y="0" width="85" height="20" forecolor="#6E5A7E" vTextAlign="Middle">
+				<printWhenExpression><![CDATA[!"ATIVA".equals($F{status})]]></printWhenExpression>
+				<expression><![CDATA[$F{status}]]></expression>
+				<box leftPadding="6"/>
+			</element>
+		</band>
+	</detail>
+	<pageFooter height="28">
+		<element kind="line" uuid="d4f3b0a5-4c6e-4f9d-9b5a-000000000001" x="0" y="8" width="535" height="1">
+			<pen lineWidth="0.75" lineColor="#D9C8EA"/>
+		</element>
+		<element kind="staticText" uuid="d4f3b0a5-4c6e-4f9d-9b5a-000000000002" x="0" y="12" width="300" height="14" forecolor="#6E5A7E" fontSize="8.0" vTextAlign="Middle">
+			<text><![CDATA[Bikes · Relatório de locações e devoluções]]></text>
+		</element>
+		<element kind="textField" uuid="d4f3b0a5-4c6e-4f9d-9b5a-000000000003" x="385" y="12" width="120" height="14" forecolor="#6E5A7E" fontSize="8.0" hTextAlign="Right" vTextAlign="Middle">
+			<expression><![CDATA["Página " + $V{PAGE_NUMBER} + " de"]]></expression>
+		</element>
+		<element kind="textField" uuid="d4f3b0a5-4c6e-4f9d-9b5a-000000000004" x="505" y="12" width="30" height="14" forecolor="#6E5A7E" fontSize="8.0" evaluationTime="Report" vTextAlign="Middle">
+			<expression><![CDATA[" " + $V{PAGE_NUMBER}]]></expression>
+		</element>
+	</pageFooter>
+	<summary height="36">
+		<element kind="textField" uuid="e5a4c1b6-5d7f-4a0e-8c6b-000000000001" x="0" y="12" width="535" height="18" fontSize="9.0" bold="true" pdfFontName="Helvetica-Bold" vTextAlign="Middle">
+			<printWhenExpression><![CDATA[$V{REPORT_COUNT} > 0]]></printWhenExpression>
+			<expression><![CDATA["Total de locações: " + $V{REPORT_COUNT}]]></expression>
+			<box leftPadding="6"/>
+		</element>
+		<element kind="staticText" uuid="e5a4c1b6-5d7f-4a0e-8c6b-000000000002" x="0" y="12" width="535" height="18" forecolor="#6E5A7E" fontSize="9.0" vTextAlign="Middle">
+			<printWhenExpression><![CDATA[$V{REPORT_COUNT} == 0]]></printWhenExpression>
+			<text><![CDATA[Nenhuma locação encontrada.]]></text>
+			<box leftPadding="6"/>
+		</element>
+	</summary>
+</jasperReport>

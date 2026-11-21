@@ -40,7 +40,7 @@ public class JasperService {
         this.addParameter();
         byte[] bytes = null;
         try {
-            Resource resource = resourceLoader.getResource(JASPER_DIR.concat("clientes-bikes.jasper"));
+            Resource resource = resourceLoader.getResource(JASPER_DIR.concat("bikesReport.jasper"));
             InputStream inputStream = resource.getInputStream();
             JasperPrint print = JasperFillManager.fillReport(inputStream, params, dataSource.getConnection());
             bytes = JasperExportManager.exportReportToPdf(print);

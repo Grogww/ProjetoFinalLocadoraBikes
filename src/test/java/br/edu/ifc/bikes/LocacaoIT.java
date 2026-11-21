@@ -6,6 +6,8 @@ import br.edu.ifc.bikes.dto.LocacaoRequestDTO;
 import br.edu.ifc.bikes.dto.LocacaoResponseDTO;
 import br.edu.ifc.bikes.jwt.JwtUtils;
 import br.edu.ifc.bikes.web.exception.ErrorMessage;
+import com.lowagie.text.pdf.PdfReader;
+import com.lowagie.text.pdf.parser.PdfTextExtractor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -334,6 +336,56 @@ public class LocacaoIT {
         org.assertj.core.api.Assertions.assertThat(responseBody).isNotNull();
         org.assertj.core.api.Assertions.assertThat(responseBody.getStatus()).isEqualTo(422);
         org.assertj.core.api.Assertions.assertThat(responseBody.getErrors()).containsKey("possuiProblema");
+    }
+
+    @Test //TESTA PARA O CASO DE SUCESSO - ADMIN GERA O RELATÓRIO COM TODAS AS LOCAÇÕES
+    public void gerarRelatorio_UsuarioAdmin_RetornaPdfComTodasStatus200() throws Exception {
+        byte[] responseBody = testClient
+                .get()
+                .uri("/api/v1/locacoes/relatorio")
+                .header(JwtUtils.JWT_AUTHORIZATION, JwtAuthentication.getHeaderAuthorization(testClient, "jose@gmail.com", "123456"))
+                .exchange()
+                .expectStatus().isOk()
+                .expectHeader().contentType(MediaType.APPLICATION_PDF)
+                .expectBody(byte[].class)
+                .returnResult().getResponseBody();
+
+        org.assertj.core.api.Assertions.assertThat(responseBody).isNotEmpty();
+        String texto = new PdfTextExtractor(new PdfReader(responseBody)).getTextFromPage(1);
+        org.assertj.core.api.Assertions.assertThat(texto).contains("Todas as locações", "BK-001", "BK-005", "BK-002", "EM ANDAMENTO", "FINALIZADA");
+    }
+
+    @Test //TESTA PARA O CASO DE SUCESSO - FILTRO APENAS ATIVAS NÃO MOSTRA AS FINALIZADAS
+    public void gerarRelatorio_ApenasAtivas_RetornaPdfSemFinalizadasStatus200() throws Exception {
+        byte[] responseBody = testClient
+                .get()
+                .uri("/api/v1/locacoes/relatorio?apenasAtivas=true")
+                .header(JwtUtils.JWT_AUTHORIZATION, JwtAuthentication.getHeaderAuthorization(testClient, "jose@gmail.com", "123456"))
+                .exchange()
+                .expectStatus().isOk()
+                .expectHeader().contentType(MediaType.APPLICATION_PDF)
+                .expectBody(byte[].class)
+                .returnResult().getResponseBody();
+
+        org.assertj.core.api.Assertions.assertThat(responseBody).isNotEmpty();
+        String texto = new PdfTextExtractor(new PdfReader(responseBody)).getTextFromPage(1);
+        org.assertj.core.api.Assertions.assertThat(texto).contains("Locações em andamento", "BK-001", "BK-005");
+        org.assertj.core.api.Assertions.assertThat(texto).doesNotContain("BK-002", "FINALIZADA");
+    }
+
+    @Test //TESTA PARA O CASO DE ACESSO NEGADO - CLIENTE NÃO GERA O RELATÓRIO
+    public void gerarRelatorio_UsuarioCliente_RetornaErrorMessageStatus403(){
+        ErrorMessage responseBody = testClient
+                .get()
+                .uri("/api/v1/locacoes/relatorio")
+                .header(JwtUtils.JWT_AUTHORIZATION, JwtAuthentication.getHeaderAuthorization(testClient, "maria@gmail.com", "123456"))
+                .exchange()
+                .expectStatus().isForbidden()
+                .expectBody(ErrorMessage.class)
+                .returnResult().getResponseBody();
+
+        org.assertj.core.api.Assertions.assertThat(responseBody).isNotNull();
+        org.assertj.core.api.Assertions.assertThat(responseBody.getStatus()).isEqualTo(403);
     }
 
     @Test //TESTA PARA O CASO DE ACESSO NEGADO - ADMIN NÃO DEVOLVE BICICLETA
