@@ -20,6 +20,11 @@ import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 @Configuration
 public class SpringSecurityConfig {
 
+    //caminhos da documentação, liberados para abrir o swagger sem token
+    private static final String[] DOCUMENTATION_OPENAPI = {
+            "/docs-bikes.html", "/docs-bikes/**", "/swagger-ui/**"
+    };
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http, JwtAuthorizationFilter jwtAuthorizationFilter) throws Exception{
         return http
@@ -29,6 +34,7 @@ public class SpringSecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST, "/api/v1/usuarios").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth").permitAll()
+                        .requestMatchers(DOCUMENTATION_OPENAPI).permitAll()
                         .anyRequest().authenticated()
                 ).sessionManagement(
                         session->session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
